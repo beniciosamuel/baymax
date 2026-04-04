@@ -1,0 +1,22 @@
+{
+  "name": "baymax",
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "start:client": "npm --prefix client start",
+    "start:server": "npm --prefix server start",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "author": "beniciosamuel",
+  "license": "ISC",
+  "description": ""
+}
