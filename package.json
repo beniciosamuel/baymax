@@ -9,6 +9,7 @@
     "server"
   ],
   "scripts": {
+    "postinstall": "node scripts/link-client-hoisted-deps.cjs",
     "start:client": "npm --prefix client start",
     "start:server": "npm --prefix server start",
     "lint": "eslint .",
