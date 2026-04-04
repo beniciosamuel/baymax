@@ -19,5 +19,12 @@
   },
   "author": "beniciosamuel",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.6"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "nodemon": "^3.1.14"
+  }
 }
