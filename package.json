@@ -21,7 +21,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "cors": "^2.8.6"
+    "cors": "^2.8.6",
+    "knex": "^3.2.9"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
