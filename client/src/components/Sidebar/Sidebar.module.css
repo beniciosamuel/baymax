@@ -1,0 +1,55 @@
+.aside {
+  width: 220px;
+  flex-shrink: 0;
+  background: #101014;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 0.75rem;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  padding: 0 0.75rem 1.25rem;
+  color: var(--text-primary);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.link,
+.linkActive {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.linkActive {
+  background: rgba(107, 61, 114, 0.25);
+  color: var(--text-primary);
+  border: 1px solid rgba(107, 61, 114, 0.45);
+}
+
+.icon {
+  width: 20px;
+  height: 24px;
+  flex-shrink: 0;
+}
