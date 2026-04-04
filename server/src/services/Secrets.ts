@@ -58,8 +58,4 @@ export class Secrets {
       ...(secrets.DATABASE_URL && { connectionString: secrets.DATABASE_URL }),
     };
   }
-
-  async getResendApiKey(): Promise<string> {
-    return this.getString("RESEND_API_KEY");
-  }
 }

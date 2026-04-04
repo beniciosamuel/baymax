@@ -114,3 +114,21 @@ CREATE TRIGGER update_patient_medicine_history_updated_at
   BEFORE UPDATE ON patient_medicine_history
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+
+-- INTERACTION_RESULT TABLE
+DROP TABLE IF EXISTS interaction_result;
+
+CREATE TABLE interaction_result (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  prescription_id UUID REFERENCES prescription(id) ON DELETE CASCADE,
+  variant INTEGER NOT NULL,
+  content JSONB NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER update_interaction_result_updated_at
+  BEFORE UPDATE ON interaction_result
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
