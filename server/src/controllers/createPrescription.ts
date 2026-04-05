@@ -1,7 +1,5 @@
 import type { Request, Response } from "express";
-import { InteractionResultUseCases } from "../models/interactionResult";
-import { PatientMedicineHistoryUseCases } from "../models/patientMedicineHistory";
-import { PrescriptionUseCases } from "../models/prescription";
+import Model from "../models";
 import { Context } from "../services/Context";
 
 interface MedicineItemPayload {
@@ -41,7 +39,17 @@ export class CreatePrescriptionController {
 
       const context = await Context.initialize();
 
-      const prescription = await PrescriptionUseCases.createPrescription(
+      /* 
+      Valida os dados da requisição aqui
+        - Verifica se patientId e doctorId existem e são válidos
+        - Verifica se content é uma string ou null
+        - Cria registro de prescription
+        - Faz requisição ao serviço de interações medicamentosas para validar o conteúdo da prescrição
+        - Criar registro de interaction_results para armazenar os resultados da validação de interações 
+          medicamentosas com a versão da prescrição 
+    */
+
+      const prescription = await Model.Prescription.UseCases.createPrescription(
         {
           patientId: patientId.trim(),
           doctorId: doctorId.trim(),
@@ -49,42 +57,6 @@ export class CreatePrescriptionController {
         },
         context,
       );
-
-      if (Array.isArray(medicines)) {
-        const validMedicines = medicines.filter(
-          (item): item is MedicineItemPayload =>
-            typeof item === "object" &&
-            item !== null &&
-            "medicineId" in item &&
-            typeof (item as { medicineId?: unknown }).medicineId === "string",
-        );
-
-        for (const medicine of validMedicines) {
-          await PatientMedicineHistoryUseCases.create(
-            {
-              patientId: patientId.trim(),
-              prescriptionId: prescription.id,
-              medicineId: medicine.medicineId,
-              dosage:
-                medicine.dosage === undefined
-                  ? null
-                  : (medicine.dosage ?? null),
-            },
-            context,
-          );
-        }
-      }
-
-      if (interactionResult !== undefined) {
-        await InteractionResultUseCases.create(
-          {
-            prescriptionId: prescription.id,
-            variant: 1,
-            content: interactionResult,
-          },
-          context,
-        );
-      }
 
       return res.status(201).json(prescription.toJSON());
     } catch (error) {

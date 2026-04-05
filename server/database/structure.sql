@@ -6,10 +6,32 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+CREATE OR REPLACE FUNCTION increase_variant_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.variant = OLD.variant + 1;
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE OR REPLACE FUNCTION set_interaction_result_variant_on_insert()
+RETURNS TRIGGER AS $$
+BEGIN
+  SELECT COALESCE(MAX(variant), 0) + 1
+    INTO NEW.variant
+  FROM interaction_result
+  WHERE prescription_id = NEW.prescription_id;
+
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 
 -- PATIENT TABLE
 DROP TABLE IF EXISTS patient;
-
+ 
 CREATE TABLE patient (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   document VARCHAR(255) NOT NULL UNIQUE,
@@ -122,13 +144,20 @@ DROP TABLE IF EXISTS interaction_result;
 CREATE TABLE interaction_result (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   prescription_id UUID REFERENCES prescription(id) ON DELETE CASCADE,
-  variant INTEGER NOT NULL,
+  variant INTEGER DEFAULT NULL,
   content JSONB NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TRIGGER set_interaction_result_variant_on_insert
+  BEFORE INSERT ON interaction_result
+  FOR EACH ROW
+  EXECUTE FUNCTION set_interaction_result_variant_on_insert();
+
 CREATE TRIGGER update_interaction_result_updated_at
   BEFORE UPDATE ON interaction_result
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+

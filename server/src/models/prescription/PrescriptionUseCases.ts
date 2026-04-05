@@ -18,15 +18,6 @@ export class PrescriptionUseCases {
     args: PrescriptionCreateDTO,
     context: Context,
   ): Promise<PrescriptionEntity> {
-    /* 
-      Valida os dados da requisição aqui
-        - Verifica se patientId e doctorId existem e são válidos
-        - Verifica se content é uma string ou null
-        - Cria registro de prescription
-        - Faz requisição ao serviço de interações medicamentosas para validar o conteúdo da prescrição
-        - Criar registro de interaction_results para armazenar os resultados da validação de interações 
-          medicamentosas com a versão da prescrição 
-    */
     return PrescriptionRepository.create(args, context);
   }
 

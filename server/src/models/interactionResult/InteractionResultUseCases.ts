@@ -5,6 +5,7 @@ import type {
 } from "./InteractionResultDTO";
 import { InteractionResultEntity } from "./InteractionResultEntity";
 import { InteractionResultRepository } from "./InteractionResultRepository";
+import { OpenFDAService } from "../../services/DrugInteractionService";
 
 export class InteractionResultUseCases {
   static async fromId(
@@ -28,7 +29,20 @@ export class InteractionResultUseCases {
     args: InteractionResultCreateDTO,
     context: Context,
   ): Promise<InteractionResultEntity> {
-    return InteractionResultRepository.create(args, context);
+    const interactions = await OpenFDAService.checkDrugInteractions(
+      args.medicines,
+    );
+
+    interactions.forEach((interaction) => {
+      await InteractionResultRepository.create(
+        {
+          prescriptionId: args.prescriptionId,
+          medicine: interaction.medicine,
+          interactions: interaction,
+        },
+        context,
+      );
+    });
   }
 
   static async update(
