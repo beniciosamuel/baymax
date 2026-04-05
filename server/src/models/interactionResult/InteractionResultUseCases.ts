@@ -1,11 +1,11 @@
-import type { Context } from "../../services/Context";
+import type { Context } from "../../services/Context.js";
 import type {
   InteractionResultCreateDTO,
   InteractionResultUpdateDTO,
-} from "./InteractionResultDTO";
-import { InteractionResultEntity } from "./InteractionResultEntity";
-import { InteractionResultRepository } from "./InteractionResultRepository";
-import { OpenFDAService } from "../../services/DrugInteractionService";
+} from "./InteractionResultDTO.js";
+import { InteractionResultEntity } from "./InteractionResultEntity.js";
+import { InteractionResultRepository } from "./InteractionResultRepository.js";
+import { OpenFDAService } from "../../services/DrugInteractionService/index.js";
 
 export class InteractionResultUseCases {
   static async fromId(
@@ -29,26 +29,22 @@ export class InteractionResultUseCases {
     args: InteractionResultCreateDTO,
     context: Context,
   ): Promise<InteractionResultEntity> {
-    const interactions = await OpenFDAService.checkDrugInteractions(
-      args.medicines,
-    );
+    const content = await OpenFDAService.checkDrugInteractions(args.drugs);
 
-    interactions.forEach((interaction) => {
-      await InteractionResultRepository.create(
-        {
-          prescriptionId: args.prescriptionId,
-          medicine: interaction.medicine,
-          interactions: interaction,
-        },
-        context,
-      );
-    });
+    return InteractionResultRepository.create(
+      {
+        prescriptionId: args.prescriptionId,
+        content: JSON.stringify(content),
+      },
+      context,
+    );
   }
 
   static async update(
     args: InteractionResultUpdateDTO,
     context: Context,
-  ): Promise<InteractionResultEntity> {
-    return InteractionResultRepository.update(args, context);
+  ): Promise<boolean> {
+    await InteractionResultRepository.update(args, context);
+    return true;
   }
 }

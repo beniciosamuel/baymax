@@ -1,1 +1,1 @@
-export * from "./openFDA";
+export * from "./openFDA/index.js";

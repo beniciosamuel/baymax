@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { PatientUseCases } from "../models/patient";
-import { Context } from "../services/Context";
+import { PatientUseCases } from "../models/patient/index.js";
+import { Context } from "../services/Context.js";
 
 export class SearchPatientController {
   static async handler(req: Request, res: Response) {
@@ -34,11 +34,9 @@ export class SearchPatientController {
           .json({ patients: patients.map((patient) => patient.toJSON()) });
       }
 
-      return res
-        .status(400)
-        .json({
-          error: "Provide at least one query: id, document or fullName",
-        });
+      return res.status(400).json({
+        error: "Provide at least one query: id, document or fullName",
+      });
     } catch (error) {
       if (error instanceof Error && error.message.includes("not found")) {
         return res.status(404).json({ error: error.message });

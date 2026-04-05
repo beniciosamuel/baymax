@@ -1,0 +1,1 @@
+{"version":3,"file":"listPrescriptions.d.ts","sourceRoot":"","sources":["../../src/controllers/listPrescriptions.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAQjD,qBAAa,2BAA2B;WACzB,OAAO,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;CAiFjD"}

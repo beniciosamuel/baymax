@@ -200,23 +200,23 @@ main() {
     echo "=========================================="
     echo ""
 
-    # # Step 4: Build the server
-    # echo "Building server..."
-    # if ! npm run build; then
-    #     print_error "Build failed"
-    #     exit 1
-    # fi
+    # Step 4: Build the server
+    echo "Building server..."
+    if ! npm run build; then
+        print_error "Build failed"
+        exit 1
+    fi
 
-    # # Step 5: Start the server (behavior depends on NODE_ENV)
-    # echo "Starting server (NODE_ENV=${NODE_ENV_RESOLVED})..."
-    # echo ""
+    # Step 5: Start the server (behavior depends on NODE_ENV)
+    echo "Starting server (NODE_ENV=${NODE_ENV_RESOLVED})..."
+    echo ""
 
-    # if [ "${NODE_ENV_RESOLVED}" = "production" ]; then
-    #     exec node .dist/index.js
-    # else
-    #     # Development: nodemon watches src/ and tsconfig.json (see nodemon.json); on change: build then run
-    #     exec nodemon
-    # fi
+    if [ "${NODE_ENV_RESOLVED}" = "production" ]; then
+        exec node .dist/index.js
+    else
+        # Development: nodemon watches src/ and tsconfig.json (see nodemon.json); on change: build then run
+        exec nodemon
+    fi
 }
 
 # Run main function; first argument can be 'development' or 'production'

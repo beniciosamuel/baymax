@@ -1,6 +1,6 @@
-import type { Context } from "../../services/Context";
-import { PatientEntity } from "./PatientEntity";
-import { PatientRepository } from "./PatientRepository";
+import type { Context } from "../../services/Context.js";
+import { PatientEntity } from "./PatientEntity.js";
+import { PatientRepository } from "./PatientRepository.js";
 
 export class PatientUseCases {
   static async fromId(id: string, context: Context): Promise<PatientEntity> {

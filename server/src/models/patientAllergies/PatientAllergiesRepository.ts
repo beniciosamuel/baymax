@@ -1,9 +1,9 @@
-import type { Context } from "../../services/Context";
+import type { Context } from "../../services/Context.js";
 import type {
   PatientAllergiesCreateDTO,
   PatientAllergiesUpdateDTO,
-} from "./PatientAllergiesDTO";
-import { PatientAllergiesEntity } from "./PatientAllergiesEntity";
+} from "./PatientAllergiesDTO.js";
+import { PatientAllergiesEntity } from "./PatientAllergiesEntity.js";
 
 export class PatientAllergiesRepository {
   static async fromId(

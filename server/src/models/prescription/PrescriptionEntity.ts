@@ -1,7 +1,7 @@
 import type {
   PrescriptionEntityInterface,
   PrescriptionRecord,
-} from "./PrescriptionDTO";
+} from "./PrescriptionDTO.js";
 
 export class PrescriptionEntity implements PrescriptionEntityInterface {
   id: string;

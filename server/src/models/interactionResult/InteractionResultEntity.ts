@@ -1,7 +1,7 @@
 import type {
   InteractionResultEntityInterface,
   InteractionResultRecord,
-} from "./InteractionResultDTO";
+} from "./InteractionResultDTO.js";
 
 export class InteractionResultEntity implements InteractionResultEntityInterface {
   id: string;

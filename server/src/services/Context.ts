@@ -1,7 +1,7 @@
-import { Secrets } from "./Secrets";
-import { Cache } from "./Cache";
-import { MessageBroker } from "./MessageBroker";
-import { DatabaseService } from "./Database";
+import { Secrets } from "./Secrets.js";
+import { Cache } from "./Cache.js";
+import { MessageBroker } from "./MessageBroker.js";
+import { DatabaseService } from "./Database.js";
 import type { Knex } from "knex";
 
 export class Context {

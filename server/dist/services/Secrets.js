@@ -30,6 +30,11 @@ export class Secrets {
             throw new Error(`Failed to get secret ${key}: ${error}`);
         }
     }
+    async getServerPort() {
+        const portStr = await this.getString("SERVER_PORT").catch(() => "3000");
+        console.info(`Using server port: ${portStr}`);
+        return parseInt(portStr, 10) || 3000;
+    }
     async getDatabaseConfig() {
         const secrets = await this.getEnvSecrets();
         return {
@@ -41,8 +46,14 @@ export class Secrets {
             ...(secrets.DATABASE_URL && { connectionString: secrets.DATABASE_URL }),
         };
     }
-    async getResendApiKey() {
-        return this.getString("RESEND_API_KEY");
+    async getRedisConfig() {
+        const secrets = await this.getEnvSecrets();
+        return {
+            host: secrets.REDIS_HOST || "127.0.0.1",
+            port: parseInt(secrets.REDIS_PORT ?? "6379", 10) || 6379,
+            username: secrets.REDIS_USERNAME || "",
+            password: secrets.REDIS_PASSWORD || "",
+        };
     }
 }
 //# sourceMappingURL=Secrets.js.map

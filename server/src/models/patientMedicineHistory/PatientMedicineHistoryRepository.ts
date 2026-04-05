@@ -1,9 +1,9 @@
-import type { Context } from "../../services/Context";
+import type { Context } from "../../services/Context.js";
 import type {
   PatientMedicineHistoryCreateDTO,
   PatientMedicineHistoryUpdateDTO,
-} from "./PatientMedicineHistoryDTO";
-import { PatientMedicineHistoryEntity } from "./PatientMedicineHistoryEntity";
+} from "./PatientMedicineHistoryDTO.js";
+import { PatientMedicineHistoryEntity } from "./PatientMedicineHistoryEntity.js";
 
 export class PatientMedicineHistoryRepository {
   static async fromPrescriptionId(

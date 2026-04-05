@@ -1,18 +1,15 @@
-curl -X GET "https://api.fda.gov/drug/label.json?search=openfda.generic_name:ibuprofen+AND+drug_interactions:aspirin&limit=1"
-
-export default class OpenFDAService {
+export class OpenFDAService {
   static async checkDrugInteractions(
     medicines: string[],
   ): Promise<{ [medicine: string]: string[] }> {
-    const interactions = await Promises.all(
+    const interactions = await Promise.all(
       medicines.map(async (medicine) => {
         const response = await fetch(
-          `https://api.fda.gov/drug/label.json?search=openfda.generic_name:${
-            encodeURIComponent(
-              medicine,
-            )}+AND+drug_interactions:${
-              encodeURIComponent(medicines.filter((m) => m !== medicine).join(","))
-            }&limit=10`,
+          `https://api.fda.gov/drug/label.json?search=openfda.generic_name:${encodeURIComponent(
+            medicine,
+          )}+AND+drug_interactions:${encodeURIComponent(
+            medicines.filter((m) => m !== medicine).join(","),
+          )}&limit=10`,
           {
             method: "GET",
             headers: {

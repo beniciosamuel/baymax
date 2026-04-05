@@ -1,5 +1,6 @@
-import knex, { Knex } from "knex";
-import { Secrets } from "./Secrets";
+import knex from "knex";
+import type { Knex } from "knex";
+import { Secrets } from "./Secrets.js";
 
 export interface DatabaseConfig {
   host: string;

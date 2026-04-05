@@ -39,6 +39,11 @@ export class Secrets {
     }
   }
 
+  async getServerPort(): Promise<number> {
+    const portStr = await this.getString("SERVER_PORT").catch(() => "3000");
+    return parseInt(portStr, 10) || 3000;
+  }
+
   async getDatabaseConfig(): Promise<{
     host: string;
     port: number;

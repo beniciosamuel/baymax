@@ -4,6 +4,7 @@ export declare class Secrets {
     private getSecrets;
     private getEnvSecrets;
     getString(key: string): Promise<string>;
+    getServerPort(): Promise<number>;
     getDatabaseConfig(): Promise<{
         host: string;
         port: number;
@@ -12,6 +13,11 @@ export declare class Secrets {
         database: string;
         connectionString?: string;
     }>;
-    getResendApiKey(): Promise<string>;
+    getRedisConfig(): Promise<{
+        host: string;
+        port: number;
+        username?: string;
+        password?: string;
+    }>;
 }
 //# sourceMappingURL=Secrets.d.ts.map

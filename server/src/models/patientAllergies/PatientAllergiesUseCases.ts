@@ -1,10 +1,10 @@
-import type { Context } from "../../services/Context";
+import type { Context } from "../../services/Context.js";
 import type {
   PatientAllergiesCreateDTO,
   PatientAllergiesUpdateDTO,
-} from "./PatientAllergiesDTO";
-import { PatientAllergiesEntity } from "./PatientAllergiesEntity";
-import { PatientAllergiesRepository } from "./PatientAllergiesRepository";
+} from "./PatientAllergiesDTO.js";
+import { PatientAllergiesEntity } from "./PatientAllergiesEntity.js";
+import { PatientAllergiesRepository } from "./PatientAllergiesRepository.js";
 
 export class PatientAllergiesUseCases {
   static async fromId(

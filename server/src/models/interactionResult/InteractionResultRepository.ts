@@ -1,9 +1,9 @@
-import type { Context } from "../../services/Context";
+import type { Context } from "../../services/Context.js";
 import type {
-  InteractionResultCreateDTO,
+  InteractionResultRepositoryCreateDTO,
   InteractionResultUpdateDTO,
-} from "./InteractionResultDTO";
-import { InteractionResultEntity } from "./InteractionResultEntity";
+} from "./InteractionResultDTO.js";
+import { InteractionResultEntity } from "./InteractionResultEntity.js";
 
 export class InteractionResultRepository {
   static async fromId(
@@ -31,7 +31,7 @@ export class InteractionResultRepository {
   }
 
   static async create(
-    args: InteractionResultCreateDTO,
+    args: InteractionResultRepositoryCreateDTO,
     context: Context,
   ): Promise<InteractionResultEntity> {
     const [record] = await context
@@ -39,7 +39,6 @@ export class InteractionResultRepository {
       .insert(
         {
           prescription_id: args.prescriptionId,
-          variant: args.variant,
           content: args.content,
         },
         "*",

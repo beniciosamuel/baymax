@@ -1,4 +1,4 @@
-import knex, { Knex } from "knex";
+import knex from "knex";
 import { Secrets } from "./Secrets.js";
 export class DatabaseConnectionError extends Error {
     cause;
@@ -42,7 +42,7 @@ export class DatabaseService {
             };
         return {
             client: "pg",
-            connection,
+            connection: connection,
             pool: {
                 min: 0,
                 max: 10,

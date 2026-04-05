@@ -1,7 +1,7 @@
 import type {
   PatientAllergiesEntityInterface,
   PatientAllergiesRecord,
-} from "./PatientAllergiesDTO";
+} from "./PatientAllergiesDTO.js";
 
 export class PatientAllergiesEntity implements PatientAllergiesEntityInterface {
   id: string;

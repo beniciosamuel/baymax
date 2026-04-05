@@ -1,4 +1,4 @@
-import type { PatientEntityInterface, PatientRecord } from "./PatientDTO";
+import type { PatientEntityInterface, PatientRecord } from "./PatientDTO.js";
 
 export class PatientEntity implements PatientEntityInterface {
   id: string;

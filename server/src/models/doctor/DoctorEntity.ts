@@ -1,4 +1,4 @@
-import type { DoctorEntityInterface, DoctorRecord } from "./DoctorDTO";
+import type { DoctorEntityInterface, DoctorRecord } from "./DoctorDTO.js";
 
 export class DoctorEntity implements DoctorEntityInterface {
   id: string;

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import Model from "../models";
-import { Context } from "../services/Context";
+import Model from "../models/index.js";
+import { Context } from "../services/Context.js";
 
 interface MedicineItemPayload {
   medicineId: string;

@@ -1,0 +1,1 @@
+{"version":3,"file":"searchMedicines.d.ts","sourceRoot":"","sources":["../../src/controllers/searchMedicines.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAIjD,qBAAa,yBAAyB;WACvB,OAAO,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;CAqCjD"}

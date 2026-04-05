@@ -1,19 +1,22 @@
-import { DoctorRepository, DoctorUseCases } from "./doctor";
+import { DoctorRepository, DoctorUseCases } from "./doctor/index.js";
 import {
   InteractionResultRepository,
   InteractionResultUseCases,
-} from "./interactionResult";
-import { MedicineRepository, MedicineUseCases } from "./medicine";
-import { PatientRepository, PatientUseCases } from "./patient";
+} from "./interactionResult/index.js";
+import { MedicineRepository, MedicineUseCases } from "./medicine/index.js";
+import { PatientRepository, PatientUseCases } from "./patient/index.js";
 import {
   PatientAllergiesRepository,
   PatientAllergiesUseCases,
-} from "./patientAllergies";
+} from "./patientAllergies/index.js";
 import {
   PatientMedicineHistoryRepository,
   PatientMedicineHistoryUseCases,
-} from "./patientMedicineHistory";
-import { PrescriptionRepository, PrescriptionUseCases } from "./prescription";
+} from "./patientMedicineHistory/index.js";
+import {
+  PrescriptionRepository,
+  PrescriptionUseCases,
+} from "./prescription/index.js";
 
 export default class Model {
   static Doctor = {

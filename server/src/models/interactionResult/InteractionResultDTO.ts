@@ -18,8 +18,12 @@ export interface InteractionResultEntityInterface {
 
 export interface InteractionResultCreateDTO {
   prescriptionId: string;
-  variant: number;
-  content: unknown;
+  drugs: string[];
+}
+
+export interface InteractionResultRepositoryCreateDTO {
+  prescriptionId: string;
+  content: string;
 }
 
 export interface InteractionResultUpdateDTO {

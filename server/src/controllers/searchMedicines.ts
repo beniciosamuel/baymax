@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { MedicineUseCases } from "../models/medicine";
-import { Context } from "../services/Context";
+import { MedicineUseCases } from "../models/medicine/index.js";
+import { Context } from "../services/Context.js";
 
 export class SearchMedicinesController {
   static async handler(req: Request, res: Response) {

@@ -1,5 +1,5 @@
-import type { Context } from "../../services/Context";
-import { MedicineEntity } from "./MedicineEntity";
+import type { Context } from "../../services/Context.js";
+import { MedicineEntity } from "./MedicineEntity.js";
 
 export class MedicineRepository {
   static async fromId(id: string, context: Context): Promise<MedicineEntity> {

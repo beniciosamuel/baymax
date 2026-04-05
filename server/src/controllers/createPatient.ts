@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { PatientUseCases } from "../models/patient";
-import { Context } from "../services/Context";
+import { PatientUseCases } from "../models/patient/index.js";
+import { Context } from "../services/Context.js";
 
 export class CreatePatientController {
   static async handler(req: Request, res: Response) {

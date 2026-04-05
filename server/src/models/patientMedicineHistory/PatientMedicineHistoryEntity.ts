@@ -1,7 +1,7 @@
 import type {
   PatientMedicineHistoryEntityInterface,
   PatientMedicineHistoryRecord,
-} from "./PatientMedicineHistoryDTO";
+} from "./PatientMedicineHistoryDTO.js";
 
 export class PatientMedicineHistoryEntity implements PatientMedicineHistoryEntityInterface {
   patientId: string;

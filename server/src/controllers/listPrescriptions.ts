@@ -1,10 +1,10 @@
 import type { Request, Response } from "express";
-import { InteractionResultUseCases } from "../models/interactionResult";
-import { PatientMedicineHistoryUseCases } from "../models/patientMedicineHistory";
-import { PrescriptionEntity } from "../models/prescription";
-import type { PrescriptionRecord } from "../models/prescription";
-import { PrescriptionUseCases } from "../models/prescription";
-import { Context } from "../services/Context";
+import { InteractionResultUseCases } from "../models/interactionResult/index.js";
+import { PatientMedicineHistoryUseCases } from "../models/patientMedicineHistory/index.js";
+import { PrescriptionEntity } from "../models/prescription/index.js";
+import type { PrescriptionRecord } from "../models/prescription/index.js";
+import { PrescriptionUseCases } from "../models/prescription/index.js";
+import { Context } from "../services/Context.js";
 
 export class ListPrescriptionsController {
   static async handler(req: Request, res: Response) {
