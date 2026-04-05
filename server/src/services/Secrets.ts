@@ -58,4 +58,20 @@ export class Secrets {
       ...(secrets.DATABASE_URL && { connectionString: secrets.DATABASE_URL }),
     };
   }
+
+  async getRedisConfig(): Promise<{
+    host: string;
+    port: number;
+    username?: string;
+    password?: string;
+  }> {
+    const secrets = await this.getEnvSecrets();
+
+    return {
+      host: secrets.REDIS_HOST || "127.0.0.1",
+      port: parseInt(secrets.REDIS_PORT ?? "6379", 10) || 6379,
+      username: secrets.REDIS_USERNAME || "",
+      password: secrets.REDIS_PASSWORD || "",
+    };
+  }
 }
