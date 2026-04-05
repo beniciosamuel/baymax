@@ -27,6 +27,15 @@
   box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
+.wrapDisabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.wrapDisabled:hover {
+  border-color: #2a2a2a;
+}
+
 .icon {
   flex-shrink: 0;
   color: #a3a3a3;
@@ -46,6 +55,10 @@
 
 .input::placeholder {
   color: #737373;
+}
+
+.input:disabled {
+  cursor: not-allowed;
 }
 
 .dropdown {

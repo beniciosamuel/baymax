@@ -30,21 +30,20 @@ export class MessageBroker {
 
   static subscribe(
     topicName: string,
-    subscriptionName: string,
-    messageHandler: (message: any) => void,
+    messageHandler: (data: any) => Promise<void>,
   ) {
     const instance = MessageBroker.getInstance();
 
-    const subscription = instance.subscription(subscriptionName);
+    const subscription = instance.subscription(topicName);
 
-    subscription.on("message", (message) => {
+    subscription.on("message", async (message) => {
       try {
         const data = JSON.parse(message.data.toString());
-        messageHandler(data);
+        await messageHandler(data);
         message.ack();
       } catch (error) {
         console.error(
-          `Error processing message from subscription ${subscriptionName}:`,
+          `Error processing message from subscription ${topicName}:`,
           error,
         );
         message.nack();
@@ -52,10 +51,7 @@ export class MessageBroker {
     });
 
     subscription.on("error", (error) => {
-      console.error(
-        `Error with subscription ${subscriptionName} for topic ${topicName}:`,
-        error,
-      );
+      console.error(`Error with subscription ${topicName}:`, error);
     });
   }
 }

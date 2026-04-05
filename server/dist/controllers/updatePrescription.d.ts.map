@@ -1,0 +1,1 @@
+{"version":3,"file":"updatePrescription.d.ts","sourceRoot":"","sources":["../../src/controllers/updatePrescription.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAKjD,qBAAa,4BAA4B;WAC1B,OAAO,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;CA4DjD"}

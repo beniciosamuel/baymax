@@ -4,10 +4,13 @@ import cors from "cors";
 import { CreateMedicineController } from "./controllers/createMedicine.js";
 import { CreatePatientController } from "./controllers/createPatient.js";
 import { CreatePrescriptionController } from "./controllers/createPrescription.js";
+import { CreateInteractionResultController } from "./controllers/createInteractionResult.js";
 import { ListPrescriptionsController } from "./controllers/listPrescriptions.js";
 import { SearchMedicinesController } from "./controllers/searchMedicines.js";
 import { SearchPatientController } from "./controllers/searchPatient.js";
 import { Secrets } from "./services/Secrets.js";
+import { MessageBroker } from "./services/MessageBroker.js";
+import { UpdatePrescriptionController } from "./controllers/updatePrescription.js";
 
 class PrivateExpress {
   private App: express.Application | null = null;
@@ -42,12 +45,21 @@ class PrivateExpress {
     const secretsService = new Secrets();
 
     this.App.post("/create-patient", CreatePatientController.handler);
-    // this.App.post("/create-medicine", CreateMedicineController.handler);
+    this.App.post("/create-medicine", CreateMedicineController.handler);
     this.App.post("/create-prescription", CreatePrescriptionController.handler);
+    this.App.post(
+      "/create-interaction-result",
+      CreateInteractionResultController.handler,
+    );
 
     this.App.get("/search-patient", SearchPatientController.handler);
     this.App.get("/search-medicines", SearchMedicinesController.handler);
     this.App.get("/list-prescriptions", ListPrescriptionsController.handler);
+
+    // MessageBroker.subscribe(
+    //   "prescription.updated",
+    //   CreateInteractionResultController.consumePrescriptionUpdated,
+    // );
 
     const serverPort = await secretsService.getServerPort();
 

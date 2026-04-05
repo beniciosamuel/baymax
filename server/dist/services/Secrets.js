@@ -32,7 +32,6 @@ export class Secrets {
     }
     async getServerPort() {
         const portStr = await this.getString("SERVER_PORT").catch(() => "3000");
-        console.info(`Using server port: ${portStr}`);
         return parseInt(portStr, 10) || 3000;
     }
     async getDatabaseConfig() {

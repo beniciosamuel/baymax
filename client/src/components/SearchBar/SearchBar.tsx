@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Search } from 'lucide-react';
-import styles from './SearchBar.module.css';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Search } from "lucide-react";
+import styles from "./SearchBar.module.css";
 
 export type SearchBarOption<T = unknown> = {
   id: string;
@@ -15,6 +22,7 @@ type Props<T> = {
   onSearch?: (query: string) => void;
   initialQuery?: string;
   className?: string;
+  disabled?: boolean;
 };
 
 export function SearchBar<T = unknown>({
@@ -22,8 +30,9 @@ export function SearchBar<T = unknown>({
   options,
   onSelect,
   onSearch,
-  initialQuery = '',
+  initialQuery = "",
   className,
+  disabled = false,
 }: Props<T>) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -49,22 +58,27 @@ export function SearchBar<T = unknown>({
         setOpen(false);
       }
     };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
   const pick = useCallback(
     (option: SearchBarOption<T>) => {
+      if (disabled) return;
       onSelect(option);
       setQuery(option.label);
       setOpen(false);
       inputRef.current?.blur();
     },
-    [onSelect]
+    [disabled, onSelect],
   );
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (disabled) {
+      return;
+    }
+
+    if (e.key === "Enter") {
       e.preventDefault();
       if (open && filtered[highlight]) {
         pick(filtered[highlight]);
@@ -74,17 +88,17 @@ export function SearchBar<T = unknown>({
       setOpen(false);
       return;
     }
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       setOpen(false);
       return;
     }
-    if (e.key === 'ArrowDown') {
+    if (e.key === "ArrowDown") {
       e.preventDefault();
       if (!open) setOpen(true);
       setHighlight((i) => Math.min(i + 1, Math.max(filtered.length - 1, 0)));
       return;
     }
-    if (e.key === 'ArrowUp') {
+    if (e.key === "ArrowUp") {
       e.preventDefault();
       if (!open) setOpen(true);
       setHighlight((i) => Math.max(i - 1, 0));
@@ -92,29 +106,33 @@ export function SearchBar<T = unknown>({
   };
 
   return (
-    <div ref={rootRef} className={`${styles.root} ${className ?? ''}`}>
-      <div className={styles.wrap}>
+    <div ref={rootRef} className={`${styles.root} ${className ?? ""}`}>
+      <div className={`${styles.wrap} ${disabled ? styles.wrapDisabled : ""}`}>
         <Search className={styles.icon} size={18} strokeWidth={2} aria-hidden />
         <input
           ref={inputRef}
           type="search"
+          disabled={disabled}
           role="combobox"
-          aria-expanded={open}
+          aria-expanded={!disabled && open}
           aria-controls={listId}
           aria-autocomplete="list"
           className={styles.input}
           placeholder={placeholder}
           value={query}
           onChange={(e) => {
+            if (disabled) return;
             setQuery(e.target.value);
             setOpen(true);
             setHighlight(0);
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            if (!disabled) setOpen(true);
+          }}
           onKeyDown={onKeyDown}
         />
       </div>
-      {open && filtered.length > 0 && (
+      {!disabled && open && filtered.length > 0 && (
         <ul id={listId} className={styles.dropdown} role="listbox">
           {filtered.map((opt, idx) => (
             <li key={opt.id} role="presentation">
@@ -122,7 +140,9 @@ export function SearchBar<T = unknown>({
                 type="button"
                 role="option"
                 aria-selected={idx === highlight}
-                className={idx === highlight ? styles.optionActive : styles.option}
+                className={
+                  idx === highlight ? styles.optionActive : styles.option
+                }
                 onMouseEnter={() => setHighlight(idx)}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(opt)}

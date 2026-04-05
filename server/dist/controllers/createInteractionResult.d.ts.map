@@ -1,0 +1,1 @@
+{"version":3,"file":"createInteractionResult.d.ts","sourceRoot":"","sources":["../../src/controllers/createInteractionResult.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AASjD,qBAAa,iCAAiC;WAC/B,0BAA0B,CAAC,IAAI,EAAE,OAAO,GAAG,OAAO,CAAC,IAAI,CAAC;WA4CxD,OAAO,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;CAuCjD"}

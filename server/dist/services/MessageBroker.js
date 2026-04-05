@@ -22,22 +22,22 @@ export class MessageBroker {
             console.error(`Error publishing message to topic ${topicName}:`, error);
         }
     }
-    static subscribe(topicName, subscriptionName, messageHandler) {
+    static subscribe(topicName, messageHandler) {
         const instance = MessageBroker.getInstance();
-        const subscription = instance.subscription(subscriptionName);
-        subscription.on("message", (message) => {
+        const subscription = instance.subscription(topicName);
+        subscription.on("message", async (message) => {
             try {
                 const data = JSON.parse(message.data.toString());
-                messageHandler(data);
+                await messageHandler(data);
                 message.ack();
             }
             catch (error) {
-                console.error(`Error processing message from subscription ${subscriptionName}:`, error);
+                console.error(`Error processing message from subscription ${topicName}:`, error);
                 message.nack();
             }
         });
         subscription.on("error", (error) => {
-            console.error(`Error with subscription ${subscriptionName} for topic ${topicName}:`, error);
+            console.error(`Error with subscription ${topicName}:`, error);
         });
     }
 }
