@@ -21,6 +21,7 @@ print_warning() {
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STRUCTURE_SQL="${SCRIPT_DIR}/structure.sql"
+MOCK_DATA_SQL="${SCRIPT_DIR}/mock_data.sql"
 SECRETS_FILE="${SCRIPT_DIR}/../.env/secrets.json"
 
 check_dependencies() {
@@ -162,6 +163,26 @@ execute_structure_sql() {
     fi
 }
 
+execute_mock_data_sql() {
+    if [ ! -f "${MOCK_DATA_SQL}" ]; then
+        print_warning "mock_data.sql not found at ${MOCK_DATA_SQL}, skipping mock data population"
+        return 0
+    fi
+
+    print_success "Executing mock_data.sql..."
+
+    run_psql_db -f "${MOCK_DATA_SQL}" 2>&1
+
+    local exit_code=$?
+
+    if [ ${exit_code} -eq 0 ]; then
+        print_success "mock_data.sql executed successfully"
+    else
+        print_error "Failed to execute mock_data.sql"
+        exit 1
+    fi
+}
+
 usage() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
@@ -238,6 +259,7 @@ main() {
     fi
     
     execute_structure_sql
+    execute_mock_data_sql
     
     echo ""
     echo "=========================================="
