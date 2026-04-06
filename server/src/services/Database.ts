@@ -60,6 +60,15 @@ export class DatabaseService {
           ssl: useSsl ? { rejectUnauthorized: false } : undefined,
         };
 
+    console.log("Database connection configuration:", {
+      host: config.host,
+      port: config.port,
+      user: config.user,
+      database: config.database,
+      connectionString: config.connectionString ? "****" : undefined,
+      ssl: useSsl,
+    });
+
     return {
       client: "pg",
       connection: connection as Knex.ConnectionConfig,
@@ -78,6 +87,7 @@ export class DatabaseService {
   }
 
   public async connect(): Promise<Knex> {
+    console.log("Connecting to the database...");
     if (this.knexInstance && this.isConnected) {
       return this.knexInstance;
     }
@@ -101,7 +111,10 @@ export class DatabaseService {
       const knexConfig = this.createKnexConfig(config);
       this.knexInstance = knex(knexConfig);
 
+      console.log("Testing database connection...");
+
       await this.knexInstance.raw("SELECT 1");
+      console.log("Database connection verified");
       this.isConnected = true;
 
       // eslint-disable-next-line no-console

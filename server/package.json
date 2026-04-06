@@ -7,7 +7,9 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "start": "chmod +x ./scripts/start.sh && ./scripts/start.sh",
+    "start:production": "NODE_ENV=production npm run start",
+    "start:development": "NODE_ENV=development npm run start",
+    "start": "chmod +x ./scripts/start.sh && NODE_ENV=${NODE_ENV:-development} ./scripts/start.sh",
     "build": "npx tsc",
     "populate": "chmod +x ./database/populate.sh && ./database/populate.sh"
   },
@@ -16,6 +18,7 @@
   "description": "",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.5.2",
     "eslint": "^10.2.0",

@@ -246,7 +246,7 @@ main() {
     echo ""
 
     if [ "${NODE_ENV_RESOLVED}" = "production" ]; then
-        exec node .dist/index.js
+        exec node dist/index.js
     else
         # Development: nodemon watches src/ and tsconfig.json (see nodemon.json); on change: build then run
         exec nodemon
