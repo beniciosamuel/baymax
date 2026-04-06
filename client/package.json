@@ -22,7 +22,7 @@
   },
   "scripts": {
     "start": "chmod +x ./scripts/start.sh && ./scripts/start.sh",
-    "build": "react-scripts build",
+    "build": "react-scripts build && mkdir -p build/.env && cp -R .env build/.env && cp .env/secrets.json build/.env/secrets.json",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

@@ -552,7 +552,7 @@ export function PrescriptionPage() {
           text: "Erro ao buscar resultado de interação da prescrição.",
         });
       }
-    }, 3000);
+    }, 10000);
 
     return () => {
       if (syncTimerRef.current) {
