@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
 import {
   MEDICINES_CATALOG,
@@ -12,6 +12,10 @@ import {
   PatientDataSource,
   type PatientSearchResult,
 } from "../../datasource/Patient/Patient.datasource";
+import {
+  InteractionResultDataSource,
+  type PrescriptionInteractionResult,
+} from "../../datasource/InteractionResult/InteractionResult.datasource";
 import styles from "./PrescriptionPage.module.css";
 
 type InteractionSeverity = "none" | "low" | "moderate" | "high";
@@ -25,28 +29,7 @@ type InteractionResult = {
 const INTERACTION_RULES: Record<
   string,
   { severity: Exclude<InteractionSeverity, "none">; details: string }
-> = {
-  "amoxicilina|metformina": {
-    severity: "low",
-    details:
-      "Pode reduzir discretamente a eficácia da metformina em alguns cenários; monitorar glicemia.",
-  },
-  "atorvastatina|ibuprofeno": {
-    severity: "moderate",
-    details:
-      "Maior risco de sobrecarga renal em pacientes vulneráveis; considerar hidratação e monitorização.",
-  },
-  "dipirona|ibuprofeno": {
-    severity: "moderate",
-    details:
-      "A associação pode aumentar risco gastrointestinal e renal quando usada por período prolongado.",
-  },
-  "losartan|ibuprofeno": {
-    severity: "high",
-    details:
-      "Pode reduzir efeito anti-hipertensivo e elevar risco de lesão renal, especialmente em idosos.",
-  },
-};
+> = {};
 
 const severityPriority: Record<InteractionSeverity, number> = {
   none: 0,
@@ -136,9 +119,83 @@ const toPatientOptions = (patients: PatientSearchResult[]) =>
     payload: patient,
   }));
 
+const parseServerInteractionDetails = (content: unknown): string[] => {
+  let parsed: unknown = content;
+
+  if (typeof content === "string") {
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      return [content];
+    }
+  }
+
+  if (!parsed || typeof parsed !== "object") {
+    return [];
+  }
+
+  return Object.values(parsed as Record<string, unknown>)
+    .flatMap((value) => {
+      if (typeof value === "string") {
+        return [value];
+      }
+
+      if (Array.isArray(value)) {
+        return value
+          .flatMap((item) => (Array.isArray(item) ? item : [item]))
+          .filter((item): item is string => typeof item === "string");
+      }
+
+      return [];
+    })
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const mapServerInteractionToUi = (
+  results: PrescriptionInteractionResult[],
+): InteractionResult => {
+  const latest = results
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt ?? b.createdAt).getTime() -
+        new Date(a.updatedAt ?? a.createdAt).getTime(),
+    )[0];
+
+  if (!latest) {
+    return {
+      title: "Sem interações detectadas",
+      details:
+        "Ainda não existem resultados de interação para esta prescrição.",
+      severity: "none",
+    };
+  }
+
+  const details = parseServerInteractionDetails(latest.content);
+  if (!details.length) {
+    return {
+      title: "Sem interações detectadas",
+      details: "Nenhuma interação relevante foi encontrada até o momento.",
+      severity: "none",
+    };
+  }
+
+  const detailsText = details.slice(0, 2).join(" ");
+  return {
+    title: "Resultado da análise de interação",
+    details: detailsText,
+    severity: "moderate",
+  };
+};
+
 export function PrescriptionPage() {
   const patientDataSource = useMemo(() => new PatientDataSource(), []);
   const medicineDataSource = useMemo(() => new MedicineDataSource(), []);
+  const interactionResultDataSource = useMemo(
+    () => new InteractionResultDataSource(),
+    [],
+  );
   const [patientOptions, setPatientOptions] = useState(() =>
     toPatientOptions([]),
   );
@@ -147,8 +204,11 @@ export function PrescriptionPage() {
     Array<{ id: string; label: string; payload: MedicineSearchResult }>
   >([]);
   const medicineSearchRequestRef = useRef(0);
+  const syncTimerRef = useRef<number | null>(null);
+  const messageTimerRef = useRef<number | null>(null);
 
   const [patient, setPatient] = useState<PatientSearchResult | null>(null);
+  const [prescriptionId, setPrescriptionId] = useState<string | null>(null);
   const [content, setContent] = useState("");
   const [selectedMedicines, setSelectedMedicines] = useState<MedicineRecord[]>(
     [],
@@ -159,7 +219,7 @@ export function PrescriptionPage() {
     type: "ok" | "err";
     text: string;
   } | null>(null);
-  const canEditPrescription = Boolean(patient);
+  const canEditPrescription = Boolean(prescriptionId);
 
   const getLocalMedicineByLabel = useCallback((label: string) => {
     const normalizedLabel = label.trim().toLowerCase();
@@ -202,6 +262,28 @@ export function PrescriptionPage() {
       };
     },
     [getLocalMedicineByLabel],
+  );
+
+  const handlePatientSelect = useCallback(
+    async (selectedPatient: PatientSearchResult) => {
+      setPatient(selectedPatient);
+      setMessage(null);
+
+      try {
+        const result = await interactionResultDataSource.createPrescription(
+          selectedPatient.id,
+        );
+        setPrescriptionId(result.id);
+        setMessage({
+          type: "ok",
+          text: "Prescrição criada. Adicione medicamentos.",
+        });
+      } catch (error) {
+        setMessage({ type: "err", text: "Erro ao criar prescrição." });
+        setPatient(null);
+      }
+    },
+    [interactionResultDataSource],
   );
 
   const searchPatientsByTyping = useCallback(
@@ -258,57 +340,152 @@ export function PrescriptionPage() {
     [medicineDataSource],
   );
 
-  const appendMedicine = (medicine: MedicineRecord) => {
-    setSelectedMedicines((prev) => {
-      if (prev.some((item) => item.id === medicine.id)) {
-        return prev;
+  const appendMedicine = useCallback(
+    async (medicine: MedicineRecord) => {
+      // Check if medicine is already in the list
+      if (selectedMedicines.some((item) => item.id === medicine.id)) {
+        return;
       }
 
-      const next = [...prev, medicine];
-      setInteractionResult(getInteractionResult(prev, medicine));
+      const newMedicines = [...selectedMedicines, medicine];
+
+      // Update UI state
+      setSelectedMedicines(newMedicines);
+      setInteractionResult(getInteractionResult(selectedMedicines, medicine));
       setContent((prevContent) =>
         prevContent ? `${prevContent}\n${medicine.name}` : medicine.name,
       );
-      return next;
-    });
-    setMessage(null);
-  };
+      setMessage(null);
 
-  const addMedicineAndResetSearch = useCallback(
-    (medicineSearchResult: MedicineSearchResult) => {
-      appendMedicine(toMedicineRecord(medicineSearchResult));
-      setMedicineOptions([]);
+      // Send update to server with all medicines
+      if (prescriptionId) {
+        try {
+          await interactionResultDataSource.updatePrescription(
+            prescriptionId,
+            newMedicines,
+          );
+        } catch (error) {
+          setMessage({
+            type: "err",
+            text: "Erro ao atualizar prescrição com medicamento.",
+          });
+        }
+      }
     },
-    [toMedicineRecord],
+    [selectedMedicines, prescriptionId, interactionResultDataSource],
   );
 
-  const removeMedicine = (medicineId: string) => {
-    setSelectedMedicines((prev) => {
-      const medicine = prev.find((item) => item.id === medicineId);
-      const next = prev.filter((item) => item.id !== medicineId);
+  const addMedicineAndResetSearch = useCallback(
+    async (medicineSearchResult: MedicineSearchResult) => {
+      await appendMedicine(toMedicineRecord(medicineSearchResult));
+      setMedicineOptions([]);
+    },
+    [toMedicineRecord, appendMedicine],
+  );
 
-      setInteractionResult(getInteractionResultFromSelection(next));
+  const removeMedicine = useCallback(
+    async (medicineId: string) => {
+      const newMedicines = selectedMedicines.filter(
+        (item) => item.id !== medicineId,
+      );
+      const removedMedicine = selectedMedicines.find(
+        (item) => item.id === medicineId,
+      );
 
-      if (medicine) {
+      // Update UI state
+      setSelectedMedicines(newMedicines);
+      setInteractionResult(getInteractionResultFromSelection(newMedicines));
+
+      if (removedMedicine) {
         setContent((prevContent) => {
           const lines = prevContent
             .split("\n")
             .map((line) => line.trim())
             .filter(Boolean);
-          const idx = lines.findIndex((line) => line === medicine.name);
+          const idx = lines.findIndex((line) => line === removedMedicine.name);
           if (idx === -1) return prevContent;
           lines.splice(idx, 1);
           return lines.join("\n");
         });
       }
+      setMessage(null);
 
-      return next;
-    });
-    setMessage(null);
-  };
+      // Send update to server with remaining medicines
+      if (prescriptionId) {
+        try {
+          await interactionResultDataSource.updatePrescription(
+            prescriptionId,
+            newMedicines,
+          );
+        } catch (error) {
+          setMessage({
+            type: "err",
+            text: "Erro ao remover medicamento da prescrição.",
+          });
+        }
+      }
+    },
+    [selectedMedicines, prescriptionId, interactionResultDataSource],
+  );
 
-  const save = () => {
-    if (!patient) {
+  useEffect(() => {
+    if (!prescriptionId || selectedMedicines.length === 0) {
+      return;
+    }
+
+    if (syncTimerRef.current) {
+      window.clearTimeout(syncTimerRef.current);
+    }
+
+    syncTimerRef.current = window.setTimeout(async () => {
+      try {
+        const prescription =
+          await interactionResultDataSource.getPrescriptionById(prescriptionId);
+
+        if (!prescription) {
+          return;
+        }
+
+        setInteractionResult(
+          mapServerInteractionToUi(prescription.interactionResults ?? []),
+        );
+      } catch {
+        setMessage({
+          type: "err",
+          text: "Erro ao buscar resultado de interação da prescrição.",
+        });
+      }
+    }, 3000);
+
+    return () => {
+      if (syncTimerRef.current) {
+        window.clearTimeout(syncTimerRef.current);
+      }
+    };
+  }, [prescriptionId, selectedMedicines, interactionResultDataSource]);
+
+  useEffect(() => {
+    if (!message) {
+      return;
+    }
+
+    if (messageTimerRef.current) {
+      window.clearTimeout(messageTimerRef.current);
+    }
+
+    messageTimerRef.current = window.setTimeout(() => {
+      setMessage(null);
+    }, 10000);
+
+    return () => {
+      if (messageTimerRef.current) {
+        window.clearTimeout(messageTimerRef.current);
+      }
+    };
+  }, [message]);
+
+  const save = useCallback(async () => {
+    if (!prescriptionId) {
       setMessage({ type: "err", text: "Selecione um paciente." });
       return;
     }
@@ -316,32 +493,43 @@ export function PrescriptionPage() {
       setMessage({ type: "err", text: "Preencha o conteúdo da prescrição." });
       return;
     }
-    setMessage({ type: "ok", text: "Prescrição salva (demonstração)." });
-    console.info("Prescrição", {
-      patientId: patient.id,
-      content: content.trim(),
-    });
-  };
+
+    try {
+      await interactionResultDataSource.updatePrescription(
+        prescriptionId,
+        selectedMedicines,
+        content.trim(),
+      );
+      setMessage({ type: "ok", text: "Prescrição salva com sucesso!" });
+
+      // Clear all state after successful save
+      setPatient(null);
+      setPrescriptionId(null);
+      setSelectedMedicines([]);
+      setContent("");
+      setInteractionResult(null);
+      setPatientOptions(toPatientOptions([]));
+      setMedicineOptions([]);
+    } catch (error) {
+      setMessage({ type: "err", text: "Erro ao salvar prescrição." });
+    }
+  }, [prescriptionId, content, selectedMedicines, interactionResultDataSource]);
 
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
-        <h1 className={styles.title}>Prescrições</h1>
+        <h1 className={styles.title}>Gestão de Prescrições</h1>
 
         <label className={styles.label}>Paciente</label>
         <SearchBar<PatientSearchResult>
           placeholder="Buscar paciente..."
           options={patientOptions}
-          onSelect={(opt) => {
-            setPatient(opt.payload);
-            setMessage(null);
-          }}
+          onSelect={(opt) => handlePatientSelect(opt.payload)}
           onQueryChange={searchPatientsByTyping}
           onSearch={async (q) => {
             const found = await patientDataSource.findExactBySearchLabel(q);
             if (found) {
-              setPatient(found);
-              setMessage(null);
+              handlePatientSelect(found);
             }
           }}
         />
@@ -402,7 +590,7 @@ export function PrescriptionPage() {
             <p className={styles.interactionPlaceholder}>
               {canEditPrescription
                 ? "Adicione um medicamento para ver o resultado da verificação de interações."
-                : "Selecione um paciente para habilitar o preenchimento da prescrição."}
+                : "Selecione um paciente para criar uma prescrição."}
             </p>
           ) : (
             <article
