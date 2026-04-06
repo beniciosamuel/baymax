@@ -24,6 +24,8 @@ type Props<T> = {
   initialQuery?: string;
   className?: string;
   disabled?: boolean;
+  clearOnSelect?: boolean;
+  keepFocusOnSelect?: boolean;
 };
 
 export function SearchBar<T = unknown>({
@@ -35,6 +37,8 @@ export function SearchBar<T = unknown>({
   initialQuery = "",
   className,
   disabled = false,
+  clearOnSelect = false,
+  keepFocusOnSelect = false,
 }: Props<T>) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -68,11 +72,18 @@ export function SearchBar<T = unknown>({
     (option: SearchBarOption<T>) => {
       if (disabled) return;
       onSelect(option);
-      setQuery(option.label);
+      setQuery(clearOnSelect ? "" : option.label);
       setOpen(false);
-      inputRef.current?.blur();
+
+      if (keepFocusOnSelect) {
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+        });
+      } else {
+        inputRef.current?.blur();
+      }
     },
-    [disabled, onSelect],
+    [clearOnSelect, disabled, keepFocusOnSelect, onSelect],
   );
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

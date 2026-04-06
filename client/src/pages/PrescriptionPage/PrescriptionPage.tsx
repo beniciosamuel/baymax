@@ -5,6 +5,10 @@ import {
   type MedicineRecord,
 } from "../../data/medicinesCatalog";
 import {
+  MedicineDataSource,
+  type MedicineSearchResult,
+} from "../../datasource/Medicine/Medicine.datasource";
+import {
   PatientDataSource,
   type PatientSearchResult,
 } from "../../datasource/Patient/Patient.datasource";
@@ -134,20 +138,15 @@ const toPatientOptions = (patients: PatientSearchResult[]) =>
 
 export function PrescriptionPage() {
   const patientDataSource = useMemo(() => new PatientDataSource(), []);
+  const medicineDataSource = useMemo(() => new MedicineDataSource(), []);
   const [patientOptions, setPatientOptions] = useState(() =>
     toPatientOptions([]),
   );
   const patientSearchRequestRef = useRef(0);
-
-  const medicineOptions = useMemo(
-    () =>
-      MEDICINES_CATALOG.map((m) => ({
-        id: m.id,
-        label: m.name,
-        payload: m,
-      })),
-    [],
-  );
+  const [medicineOptions, setMedicineOptions] = useState<
+    Array<{ id: string; label: string; payload: MedicineSearchResult }>
+  >([]);
+  const medicineSearchRequestRef = useRef(0);
 
   const [patient, setPatient] = useState<PatientSearchResult | null>(null);
   const [content, setContent] = useState("");
@@ -161,6 +160,49 @@ export function PrescriptionPage() {
     text: string;
   } | null>(null);
   const canEditPrescription = Boolean(patient);
+
+  const getLocalMedicineByLabel = useCallback((label: string) => {
+    const normalizedLabel = label.trim().toLowerCase();
+    const exactMatch = MEDICINES_CATALOG.find(
+      (medicine) => medicine.name.toLowerCase() === normalizedLabel,
+    );
+    if (exactMatch) {
+      return exactMatch;
+    }
+
+    return (
+      MEDICINES_CATALOG.find((medicine) => {
+        const localName = medicine.name.toLowerCase();
+        return (
+          localName.includes(normalizedLabel) ||
+          normalizedLabel.includes(localName)
+        );
+      }) ?? null
+    );
+  }, []);
+
+  const toMedicineRecord = useCallback(
+    (medicine: MedicineSearchResult): MedicineRecord => {
+      const localMedicine = getLocalMedicineByLabel(medicine.label);
+
+      if (localMedicine) {
+        return localMedicine;
+      }
+
+      return {
+        id: `server:${medicine.id}`,
+        name: medicine.label,
+        dosage: "",
+        category: "",
+        tarja: "",
+        administracao: "",
+        description: "",
+        collateralEffects: [],
+        photoUrl: "",
+      };
+    },
+    [getLocalMedicineByLabel],
+  );
 
   const searchPatientsByTyping = useCallback(
     async (query: string) => {
@@ -186,6 +228,36 @@ export function PrescriptionPage() {
     [patientDataSource],
   );
 
+  const searchMedicinesByTyping = useCallback(
+    async (query: string) => {
+      const requestId = medicineSearchRequestRef.current + 1;
+      medicineSearchRequestRef.current = requestId;
+
+      try {
+        const medicines = await medicineDataSource.searchByName(query);
+
+        if (requestId !== medicineSearchRequestRef.current) {
+          return;
+        }
+
+        setMedicineOptions(
+          medicines.map((medicine) => ({
+            id: medicine.id,
+            label: medicine.label,
+            payload: medicine,
+          })),
+        );
+      } catch {
+        if (requestId !== medicineSearchRequestRef.current) {
+          return;
+        }
+
+        setMedicineOptions([]);
+      }
+    },
+    [medicineDataSource],
+  );
+
   const appendMedicine = (medicine: MedicineRecord) => {
     setSelectedMedicines((prev) => {
       if (prev.some((item) => item.id === medicine.id)) {
@@ -201,6 +273,14 @@ export function PrescriptionPage() {
     });
     setMessage(null);
   };
+
+  const addMedicineAndResetSearch = useCallback(
+    (medicineSearchResult: MedicineSearchResult) => {
+      appendMedicine(toMedicineRecord(medicineSearchResult));
+      setMedicineOptions([]);
+    },
+    [toMedicineRecord],
+  );
 
   const removeMedicine = (medicineId: string) => {
     setSelectedMedicines((prev) => {
@@ -267,17 +347,14 @@ export function PrescriptionPage() {
         />
 
         <label className={styles.label}>Adicionar medicamento</label>
-        <SearchBar<MedicineRecord>
+        <SearchBar<MedicineSearchResult>
           placeholder="Buscar medicamento para adicionar..."
           options={medicineOptions}
           disabled={!canEditPrescription}
-          onSelect={(opt) => appendMedicine(opt.payload)}
-          onSearch={(q) => {
-            const found = MEDICINES_CATALOG.find(
-              (m) => m.name.toLowerCase() === q.toLowerCase(),
-            );
-            if (found) appendMedicine(found);
-          }}
+          clearOnSelect
+          keepFocusOnSelect
+          onSelect={(opt) => addMedicineAndResetSearch(opt.payload)}
+          onQueryChange={searchMedicinesByTyping}
         />
 
         <label className={styles.label} htmlFor="added-medicines">
