@@ -1,13 +1,13 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
 import {
   MEDICINES_CATALOG,
   type MedicineRecord,
 } from "../../data/medicinesCatalog";
 import {
-  PATIENTS_CATALOG,
-  type PatientRecord,
-} from "../../data/patientsCatalog";
+  PatientDataSource,
+  type PatientSearchResult,
+} from "../../datasource/Patient/Patient.datasource";
 import styles from "./PrescriptionPage.module.css";
 
 type InteractionSeverity = "none" | "low" | "moderate" | "high";
@@ -125,16 +125,19 @@ const getInteractionResultFromSelection = (
   return getInteractionResult(existing, added);
 };
 
+const toPatientOptions = (patients: PatientSearchResult[]) =>
+  patients.map((patient) => ({
+    id: patient.id,
+    label: patient.searchLabel,
+    payload: patient,
+  }));
+
 export function PrescriptionPage() {
-  const patientOptions = useMemo(
-    () =>
-      PATIENTS_CATALOG.map((p) => ({
-        id: p.id,
-        label: p.searchLabel,
-        payload: p,
-      })),
-    [],
+  const patientDataSource = useMemo(() => new PatientDataSource(), []);
+  const [patientOptions, setPatientOptions] = useState(() =>
+    toPatientOptions([]),
   );
+  const patientSearchRequestRef = useRef(0);
 
   const medicineOptions = useMemo(
     () =>
@@ -146,7 +149,7 @@ export function PrescriptionPage() {
     [],
   );
 
-  const [patient, setPatient] = useState<PatientRecord | null>(null);
+  const [patient, setPatient] = useState<PatientSearchResult | null>(null);
   const [content, setContent] = useState("");
   const [selectedMedicines, setSelectedMedicines] = useState<MedicineRecord[]>(
     [],
@@ -158,6 +161,30 @@ export function PrescriptionPage() {
     text: string;
   } | null>(null);
   const canEditPrescription = Boolean(patient);
+
+  const searchPatientsByTyping = useCallback(
+    async (query: string) => {
+      const requestId = patientSearchRequestRef.current + 1;
+      patientSearchRequestRef.current = requestId;
+
+      try {
+        const patients = await patientDataSource.searchByName(query);
+
+        if (requestId !== patientSearchRequestRef.current) {
+          return;
+        }
+
+        setPatientOptions(toPatientOptions(patients));
+      } catch {
+        if (requestId !== patientSearchRequestRef.current) {
+          return;
+        }
+
+        setPatientOptions(toPatientOptions([]));
+      }
+    },
+    [patientDataSource],
+  );
 
   const appendMedicine = (medicine: MedicineRecord) => {
     setSelectedMedicines((prev) => {
@@ -222,17 +249,16 @@ export function PrescriptionPage() {
         <h1 className={styles.title}>Prescrições</h1>
 
         <label className={styles.label}>Paciente</label>
-        <SearchBar<PatientRecord>
+        <SearchBar<PatientSearchResult>
           placeholder="Buscar paciente..."
           options={patientOptions}
           onSelect={(opt) => {
             setPatient(opt.payload);
             setMessage(null);
           }}
-          onSearch={(q) => {
-            const found = PATIENTS_CATALOG.find(
-              (p) => p.searchLabel.toLowerCase() === q.toLowerCase(),
-            );
+          onQueryChange={searchPatientsByTyping}
+          onSearch={async (q) => {
+            const found = await patientDataSource.findExactBySearchLabel(q);
             if (found) {
               setPatient(found);
               setMessage(null);

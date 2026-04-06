@@ -20,6 +20,7 @@ type Props<T> = {
   options: SearchBarOption<T>[];
   onSelect: (option: SearchBarOption<T>) => void;
   onSearch?: (query: string) => void;
+  onQueryChange?: (query: string) => void;
   initialQuery?: string;
   className?: string;
   disabled?: boolean;
@@ -30,6 +31,7 @@ export function SearchBar<T = unknown>({
   options,
   onSelect,
   onSearch,
+  onQueryChange,
   initialQuery = "",
   className,
   disabled = false,
@@ -122,7 +124,9 @@ export function SearchBar<T = unknown>({
           value={query}
           onChange={(e) => {
             if (disabled) return;
-            setQuery(e.target.value);
+            const nextQuery = e.target.value;
+            setQuery(nextQuery);
+            onQueryChange?.(nextQuery);
             setOpen(true);
             setHighlight(0);
           }}
