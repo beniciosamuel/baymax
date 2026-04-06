@@ -24,6 +24,16 @@ type InteractionResult = {
   title: string;
   details: string;
   severity: InteractionSeverity;
+  sourceMessage: string | null;
+  warning: string | null;
+};
+
+type InteractionSource = "api" | "cache";
+
+type ServerInteractionEntry = {
+  medicine: string;
+  interationResult: string;
+  source: InteractionSource;
 };
 
 const INTERACTION_RULES: Record<
@@ -51,6 +61,8 @@ const getInteractionResult = (
       details:
         "Nenhuma interação para avaliar no momento. Adicione outro medicamento para checagem.",
       severity: "none",
+      sourceMessage: null,
+      warning: null,
     };
   }
 
@@ -83,6 +95,8 @@ const getInteractionResult = (
       details:
         "Nenhuma interação relevante detectada com os medicamentos já selecionados.",
       severity: "none",
+      sourceMessage: null,
+      warning: null,
     };
   }
 
@@ -97,6 +111,8 @@ const getInteractionResult = (
     title: `Interação ${topFinding.severity === "high" ? "alta" : topFinding.severity} com ${topFinding.withMedicine}`,
     details: topFinding.details,
     severity: topFinding.severity,
+    sourceMessage: null,
+    warning: null,
   };
 };
 
@@ -119,14 +135,16 @@ const toPatientOptions = (patients: PatientSearchResult[]) =>
     payload: patient,
   }));
 
-const parseServerInteractionDetails = (content: unknown): string[] => {
+const parseServerInteractionDetails = (
+  content: unknown,
+): ServerInteractionEntry[] => {
   let parsed: unknown = content;
 
   if (typeof content === "string") {
     try {
       parsed = JSON.parse(content);
     } catch {
-      return [content];
+      return [];
     }
   }
 
@@ -134,22 +152,81 @@ const parseServerInteractionDetails = (content: unknown): string[] => {
     return [];
   }
 
-  return Object.values(parsed as Record<string, unknown>)
-    .flatMap((value) => {
+  return Object.entries(parsed as Record<string, unknown>)
+    .flatMap(([medicine, value]) => {
       if (typeof value === "string") {
-        return [value];
+        const interationResult = value.trim();
+
+        return interationResult
+          ? [
+              {
+                medicine,
+                interationResult,
+                source: "api" as const,
+              },
+            ]
+          : [];
       }
 
       if (Array.isArray(value)) {
-        return value
+        const interationResult = value
           .flatMap((item) => (Array.isArray(item) ? item : [item]))
-          .filter((item): item is string => typeof item === "string");
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .join(" ");
+
+        return interationResult
+          ? [
+              {
+                medicine,
+                interationResult,
+                source: "api" as const,
+              },
+            ]
+          : [];
       }
 
-      return [];
+      if (!value || typeof value !== "object") {
+        return [];
+      }
+
+      const entry = value as {
+        interationResult?: unknown;
+        interactionResult?: unknown;
+        interactions?: unknown;
+        source?: unknown;
+      };
+
+      const interationResult =
+        typeof entry.interationResult === "string"
+          ? entry.interationResult
+          : typeof entry.interactionResult === "string"
+            ? entry.interactionResult
+            : Array.isArray(entry.interactions)
+              ? entry.interactions
+                  .flatMap((item) => (Array.isArray(item) ? item : [item]))
+                  .filter((item): item is string => typeof item === "string")
+                  .map((item) => item.trim())
+                  .filter(Boolean)
+                  .join(" ")
+              : "";
+
+      if (!interationResult.trim()) {
+        return [];
+      }
+
+      return [
+        {
+          medicine,
+          interationResult: interationResult.trim(),
+          source: (entry.source === "cache"
+            ? "cache"
+            : "api") as InteractionSource,
+        },
+      ];
     })
-    .map((item) => item.trim())
-    .filter(Boolean);
+    .filter((entry) => entry.interationResult.length > 0);
 };
 
 const mapServerInteractionToUi = (
@@ -169,6 +246,8 @@ const mapServerInteractionToUi = (
       details:
         "Ainda não existem resultados de interação para esta prescrição.",
       severity: "none",
+      sourceMessage: null,
+      warning: null,
     };
   }
 
@@ -178,14 +257,32 @@ const mapServerInteractionToUi = (
       title: "Sem interações detectadas",
       details: "Nenhuma interação relevante foi encontrada até o momento.",
       severity: "none",
+      sourceMessage: null,
+      warning: null,
     };
   }
 
-  const detailsText = details.slice(0, 2).join(" ");
+  const detailsText = details
+    .map((item) => `${item.medicine}: ${item.interationResult}`)
+    .join("\n\n");
+  const hasCachedSource = details.some((item) => item.source === "cache");
+  const hasApiSource = details.some((item) => item.source === "api");
+
+  const sourceMessage =
+    hasCachedSource && hasApiSource
+      ? "Fonte dos dados: OpenFDA e cache."
+      : hasCachedSource
+        ? "Fonte dos dados: cache."
+        : "Fonte dos dados: OpenFDA.";
+
   return {
     title: "Resultado da análise de interação",
     details: detailsText,
     severity: "moderate",
+    sourceMessage,
+    warning: hasCachedSource
+      ? "Aviso: parte destes dados veio do cache e pode estar desatualizada."
+      : null,
   };
 };
 
@@ -602,6 +699,16 @@ export function PrescriptionPage() {
               <p className={styles.interactionCardText}>
                 {interactionResult.details}
               </p>
+              {interactionResult.sourceMessage && (
+                <p className={styles.interactionSource}>
+                  {interactionResult.sourceMessage}
+                </p>
+              )}
+              {interactionResult.warning && (
+                <p className={styles.interactionWarning}>
+                  {interactionResult.warning}
+                </p>
+              )}
               <p className={styles.interactionMeta}>
                 Medicamentos selecionados: {selectedMedicines.length}
               </p>

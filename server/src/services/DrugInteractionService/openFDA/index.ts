@@ -6,7 +6,7 @@ export enum InteractionSourceEnum {
 }
 
 type InteractionResult = {
-  interactions: string[];
+  interationResult: string;
   source: InteractionSourceEnum;
 };
 
@@ -20,12 +20,12 @@ export class OpenFDAService {
 
   private static buildResult(
     medicine: string,
-    interactions: string[],
+    interationResult: string,
     source: InteractionSourceEnum,
   ): InteractionResponse {
     return {
       [medicine]: {
-        interactions,
+        interationResult,
         source,
       },
     };
@@ -44,17 +44,37 @@ export class OpenFDAService {
     try {
       const parsed = JSON.parse(cachedValue) as Record<string, unknown>;
       const cachedMedicine = parsed[medicine];
+      const legacyMedicine = cachedMedicine as {
+        interationResult?: unknown;
+        interactionResult?: unknown;
+        interactions?: unknown;
+      };
 
       if (
         cachedMedicine &&
         typeof cachedMedicine === "object" &&
-        Array.isArray(
-          (cachedMedicine as { interactions?: unknown }).interactions,
-        )
+        (typeof legacyMedicine.interationResult === "string" ||
+          typeof legacyMedicine.interactionResult === "string" ||
+          Array.isArray(legacyMedicine.interactions))
       ) {
+        let interationResult = "";
+
+        if (typeof legacyMedicine.interationResult === "string") {
+          interationResult = legacyMedicine.interationResult;
+        } else if (typeof legacyMedicine.interactionResult === "string") {
+          interationResult = legacyMedicine.interactionResult;
+        } else if (Array.isArray(legacyMedicine.interactions)) {
+          interationResult = legacyMedicine.interactions
+            .flatMap((item) => (Array.isArray(item) ? item : [item]))
+            .filter((item): item is string => typeof item === "string")
+            .map((item) => item.trim())
+            .filter(Boolean)
+            .join(" ");
+        }
+
         return this.buildResult(
           medicine,
-          (cachedMedicine as { interactions: string[] }).interactions,
+          interationResult,
           InteractionSourceEnum.CACHE,
         );
       }
@@ -70,7 +90,7 @@ export class OpenFDAService {
 
   static async checkDrugInteractions(medicines: string[]): Promise<{
     [medicine: string]: {
-      interactions: string[];
+      interationResult: string;
       source: InteractionSourceEnum;
     };
   }> {
@@ -113,7 +133,7 @@ export class OpenFDAService {
 
           const result = this.buildResult(
             medicine,
-            interactionsList,
+            interactionsList.join(" "),
             InteractionSourceEnum.API,
           );
 
@@ -132,13 +152,13 @@ export class OpenFDAService {
             error,
           );
 
-          return this.buildResult(medicine, [], InteractionSourceEnum.API);
+          return this.buildResult(medicine, "", InteractionSourceEnum.API);
         }
       }),
     );
 
     return interactions.reduce((acc, curr) => {
       return { ...acc, ...curr };
-    }, {});
+    }, {} as InteractionResponse);
   }
 }

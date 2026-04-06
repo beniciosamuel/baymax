@@ -179,6 +179,21 @@
   color: var(--text-primary);
   font-size: 0.88rem;
   line-height: 1.45;
+  white-space: pre-line;
+}
+
+.interactionWarning {
+  margin: 0.55rem 0 0;
+  color: rgba(245, 203, 92, 0.95);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.interactionSource {
+  margin: 0.55rem 0 0;
+  color: rgba(164, 213, 255, 0.95);
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .interactionMeta {

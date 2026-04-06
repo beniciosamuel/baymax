@@ -6,7 +6,13 @@
 
 ## Prerequisites
 
-- Instalar e configurar GCloud cli
+### Instalar e configurar GCloud cli
+
+Para executar a aplicação é preciso rodar o emulador do PubSub, utilize o seguinte comando
+
+```
+gcloud beta emulators pubsub start --project=baymax-492400
+```
 
 ### Instalar e configurar Redis com cli
 
