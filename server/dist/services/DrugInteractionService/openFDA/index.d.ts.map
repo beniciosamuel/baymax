@@ -1,1 +1,1 @@
-{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../../src/services/DrugInteractionService/openFDA/index.ts"],"names":[],"mappings":"AAAA,qBAAa,cAAc;WACZ,qBAAqB,CAChC,SAAS,EAAE,MAAM,EAAE,GAClB,OAAO,CAAC;QAAE,CAAC,QAAQ,EAAE,MAAM,GAAG,MAAM,EAAE,CAAA;KAAE,CAAC;CA2C7C"}
+{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../../src/services/DrugInteractionService/openFDA/index.ts"],"names":[],"mappings":"AAAA,qBAAa,cAAc;WACZ,qBAAqB,CAChC,SAAS,EAAE,MAAM,EAAE,GAClB,OAAO,CAAC;QAAE,CAAC,QAAQ,EAAE,MAAM,GAAG,MAAM,EAAE,CAAA;KAAE,CAAC;CA6C7C"}

@@ -54,7 +54,7 @@ export class UpdatePrescriptionController {
           context,
         );
 
-      await MessageBroker.publish("prescription.updated", {
+      await MessageBroker.publish("prescriptionUpdated", {
         prescriptionId: prescription.id,
         drugs: normalizedDrugs,
       });

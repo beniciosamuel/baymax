@@ -18,6 +18,8 @@ export class OpenFDAService {
           },
         );
 
+        console.log(`OpenFDA API response for ${medicine}:`, response);
+
         if (!response.ok) {
           console.error(
             `Failed to fetch interactions for ${medicine}: ${response.statusText}`,

@@ -36,13 +36,11 @@ class PrivateExpress {
         this.App.post("/create-medicine", CreateMedicineController.handler);
         this.App.post("/create-prescription", CreatePrescriptionController.handler);
         this.App.post("/create-interaction-result", CreateInteractionResultController.handler);
+        this.App.put("/update-prescription", UpdatePrescriptionController.handler);
         this.App.get("/search-patient", SearchPatientController.handler);
         this.App.get("/search-medicines", SearchMedicinesController.handler);
         this.App.get("/list-prescriptions", ListPrescriptionsController.handler);
-        // MessageBroker.subscribe(
-        //   "prescription.updated",
-        //   CreateInteractionResultController.consumePrescriptionUpdated,
-        // );
+        MessageBroker.subscribe("prescriptionUpdated", CreateInteractionResultController.consumePrescriptionUpdated);
         const serverPort = await secretsService.getServerPort();
         this.Server.listen(serverPort, () => {
             console.info(`Server is running on port ${serverPort}`);

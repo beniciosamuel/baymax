@@ -142,6 +142,35 @@ retrieve_secret() {
     print_success "Secret also exported as BAYMAX_SERVER environment variable"
 }
 
+# Ensure required Pub/Sub resources exist before app startup
+ensure_pubsub_resources() {
+    local topic_name="prescriptionUpdated"
+    local subscription_name="prescriptionUpdated"
+    local project_id
+    project_id="$(gcloud config get-value project 2>/dev/null | tr -d '\n')"
+
+    if [ -z "$project_id" ]; then
+        print_error "No GCP project found for Pub/Sub. Run: gcloud config set project PROJECT_ID"
+        exit 1
+    fi
+
+    print_success "Ensuring Pub/Sub topic/subscription exist (project: ${project_id})"
+
+    if ! gcloud pubsub topics describe "$topic_name" --project="$project_id" > /dev/null 2>&1; then
+        gcloud pubsub topics create "$topic_name" --project="$project_id"
+        print_success "Created topic: ${topic_name}"
+    else
+        print_success "Topic exists: ${topic_name}"
+    fi
+
+    if ! gcloud pubsub subscriptions describe "$subscription_name" --project="$project_id" > /dev/null 2>&1; then
+        gcloud pubsub subscriptions create "$subscription_name" --topic="$topic_name" --project="$project_id"
+        print_success "Created subscription: ${subscription_name}"
+    else
+        print_success "Subscription exists: ${subscription_name}"
+    fi
+}
+
 # Resolve NODE_ENV from argument, environment, or default
 resolve_node_env() {
     if [ -n "$1" ]; then
@@ -193,6 +222,11 @@ main() {
 
     # Step 3: Retrieve secret and export as environment variable
     retrieve_secret
+
+    # Step 3.1: Provision Pub/Sub resources (idempotent, development only)
+    if [ "${NODE_ENV_RESOLVED}" = "development" ]; then
+        ensure_pubsub_resources
+    fi
 
     echo ""
     echo "=========================================="

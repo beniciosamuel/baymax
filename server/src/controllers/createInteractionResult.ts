@@ -9,6 +9,10 @@ interface PrescriptionUpdatedMessage {
 
 export class CreateInteractionResultController {
   static async consumePrescriptionUpdated(data: unknown): Promise<void> {
+    console.log(
+      "Received prescription.updated event with data:",
+      JSON.stringify(data),
+    );
     const { prescriptionId, drugs } = (data ??
       {}) as PrescriptionUpdatedMessage;
 
@@ -42,6 +46,18 @@ export class CreateInteractionResultController {
     }
 
     const context = await Context.initialize();
+    const existingPrescription =
+      await Model.Prescription.UseCases.getPrescriptionById(
+        prescriptionId.trim(),
+        context,
+      );
+
+    if (!existingPrescription) {
+      console.warn(
+        `Skipping interaction result creation: prescription ${prescriptionId} was not found`,
+      );
+      return;
+    }
 
     await Model.InteractionResult.UseCases.create(
       {

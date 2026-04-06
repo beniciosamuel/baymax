@@ -51,15 +51,16 @@ class PrivateExpress {
       "/create-interaction-result",
       CreateInteractionResultController.handler,
     );
+    this.App.put("/update-prescription", UpdatePrescriptionController.handler);
 
     this.App.get("/search-patient", SearchPatientController.handler);
     this.App.get("/search-medicines", SearchMedicinesController.handler);
     this.App.get("/list-prescriptions", ListPrescriptionsController.handler);
 
-    // MessageBroker.subscribe(
-    //   "prescription.updated",
-    //   CreateInteractionResultController.consumePrescriptionUpdated,
-    // );
+    MessageBroker.subscribe(
+      "prescriptionUpdated",
+      CreateInteractionResultController.consumePrescriptionUpdated,
+    );
 
     const serverPort = await secretsService.getServerPort();
 

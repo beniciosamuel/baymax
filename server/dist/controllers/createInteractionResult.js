@@ -2,6 +2,7 @@ import Model from "../models/index.js";
 import { Context } from "../services/Context.js";
 export class CreateInteractionResultController {
     static async consumePrescriptionUpdated(data) {
+        console.log("Received prescription.updated event with data:", JSON.stringify(data));
         const { prescriptionId, drugs } = (data ??
             {});
         if (typeof prescriptionId !== "string" ||
@@ -22,6 +23,11 @@ export class CreateInteractionResultController {
             return;
         }
         const context = await Context.initialize();
+        const existingPrescription = await Model.Prescription.UseCases.getPrescriptionById(prescriptionId.trim(), context);
+        if (!existingPrescription) {
+            console.warn(`Skipping interaction result creation: prescription ${prescriptionId} was not found`);
+            return;
+        }
         await Model.InteractionResult.UseCases.create({
             prescriptionId: prescriptionId.trim(),
             drugs: normalizedDrugs,
