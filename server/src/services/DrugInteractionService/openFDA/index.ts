@@ -1,44 +1,139 @@
+import { Cache } from "../../Cache.js";
+
+export enum InteractionSourceEnum {
+  API = "api",
+  CACHE = "cache",
+}
+
+type InteractionResult = {
+  interactions: string[];
+  source: InteractionSourceEnum;
+};
+
+type InteractionResponse = Record<string, InteractionResult>;
+
 export class OpenFDAService {
-  static async checkDrugInteractions(
-    medicines: string[],
-  ): Promise<{ [medicine: string]: string[] }> {
+  public static buildCacheKey(medicines: string[]): string {
+    const sortedMedicines = medicines.slice().sort();
+    return `#drugInteracions#${encodeURIComponent(sortedMedicines.join("+"))}`;
+  }
+
+  private static buildResult(
+    medicine: string,
+    interactions: string[],
+    source: InteractionSourceEnum,
+  ): InteractionResponse {
+    return {
+      [medicine]: {
+        interactions,
+        source,
+      },
+    };
+  }
+
+  private static async readCachedResult(
+    cacheKey: string,
+    medicine: string,
+  ): Promise<InteractionResponse | null> {
+    const cachedValue = await Cache.get(cacheKey);
+
+    if (!cachedValue) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(cachedValue) as Record<string, unknown>;
+      const cachedMedicine = parsed[medicine];
+
+      if (
+        cachedMedicine &&
+        typeof cachedMedicine === "object" &&
+        Array.isArray(
+          (cachedMedicine as { interactions?: unknown }).interactions,
+        )
+      ) {
+        return this.buildResult(
+          medicine,
+          (cachedMedicine as { interactions: string[] }).interactions,
+          InteractionSourceEnum.CACHE,
+        );
+      }
+    } catch (error) {
+      console.error(
+        `Failed to parse cached interactions for ${medicine}:`,
+        error,
+      );
+    }
+
+    return null;
+  }
+
+  static async checkDrugInteractions(medicines: string[]): Promise<{
+    [medicine: string]: {
+      interactions: string[];
+      source: InteractionSourceEnum;
+    };
+  }> {
     const interactions = await Promise.all(
       medicines.map(async (medicine) => {
-        const response = await fetch(
-          `https://api.fda.gov/drug/label.json?search=openfda.generic_name:${encodeURIComponent(
-            medicine,
-          )}+AND+drug_interactions:${encodeURIComponent(
-            medicines.filter((m) => m !== medicine).join(","),
-          )}&limit=10`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          },
+        const interactionSearch = encodeURIComponent(
+          medicines.filter((m) => m !== medicine).join(","),
         );
+        const cacheKey = `#drugInteracions#${interactionSearch}`;
 
-        console.log(`OpenFDA API response for ${medicine}:`, response);
-
-        if (!response.ok) {
-          console.error(
-            `Failed to fetch interactions for ${medicine}: ${response.statusText}`,
+        try {
+          const response = await fetch(
+            `https://api.fda.gov/drug/label.json?search=openfda.generic_name:${encodeURIComponent(
+              medicine,
+            )}+AND+drug_interactions:${interactionSearch}&limit=10`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            },
           );
-          return { [medicine]: [] };
+
+          console.log(`OpenFDA API response for ${medicine}:`, response);
+
+          if (!response.ok) {
+            throw new Error(response.statusText);
+          }
+
+          const data = await response.json();
+          const interactionsList: string[] = [];
+
+          if (data.results && Array.isArray(data.results)) {
+            data.results.forEach((result: any) => {
+              if (result.drug_interactions) {
+                interactionsList.push(result.drug_interactions);
+              }
+            });
+          }
+
+          const result = this.buildResult(
+            medicine,
+            interactionsList,
+            InteractionSourceEnum.API,
+          );
+
+          await Cache.set(cacheKey, JSON.stringify(result));
+
+          return result;
+        } catch (error) {
+          const cachedResult = await this.readCachedResult(cacheKey, medicine);
+
+          if (cachedResult) {
+            return cachedResult;
+          }
+
+          console.error(
+            `Failed to fetch interactions for ${medicine} and no cache entry was available:`,
+            error,
+          );
+
+          return this.buildResult(medicine, [], InteractionSourceEnum.API);
         }
-
-        const data = await response.json();
-        const interactionsList: string[] = [];
-
-        if (data.results && Array.isArray(data.results)) {
-          data.results.forEach((result: any) => {
-            if (result.drug_interactions) {
-              interactionsList.push(result.drug_interactions);
-            }
-          });
-        }
-
-        return { [medicine]: interactionsList };
       }),
     );
 

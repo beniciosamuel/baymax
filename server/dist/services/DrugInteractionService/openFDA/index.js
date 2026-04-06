@@ -1,7 +1,7 @@
 export class OpenFDAService {
     static async checkDrugInteractions(medicines) {
         const interactions = await Promise.all(medicines.map(async (medicine) => {
-            const response = await fetch(`https://api.fda.gov/drug/label.json?search=openfda.generic_name:${encodeURIComponent(medicine)}+AND+drug_interactions:${encodeURIComponent(medicines.filter((m) => m !== medicine).join(","))}&limit=10`, {
+            const response = await fetch(`https://ap.fda.gov/drug/label.json?search=openfda.generic_name:${encodeURIComponent(medicine)}+AND+drug_interactions:${encodeURIComponent(medicines.filter((m) => m !== medicine).join(","))}&limit=10`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
